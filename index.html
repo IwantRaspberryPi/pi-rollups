@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#111310">
+  <meta name="description" content="Spin a position. Recall four digits of pi. A 14-second memory arcade with nine levels and a million-digit Chaos mode.">
+  <title>Pi Tumbler — A little irrational.</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Pi Tumbler home"><span class="brand-icon">π</span> PI TUMBLER<span class="brand-dot">®</span></a>
+    <div class="header-right"><span class="edition">THE MEMORY ARCADE</span><button id="sound" class="icon-button" aria-label="Mute sound" aria-pressed="false">♪ <span>Sound on</span></button><button id="help" class="icon-button" aria-label="How to play">?</button></div>
+  </header>
+  <main>
+    <div class="intro"><div><p class="eyebrow"><span class="status-dot"></span> A LITTLE IRRATIONAL.</p><h1>How far can you <em>remember?</em></h1></div><p class="intro-note">One position. Four digits.<br>Fourteen seconds to find your rhythm.</p></div>
+    <div class="arcade-layout">
+      <aside class="level-panel">
+        <div class="panel-heading"><span class="eyebrow">01 / SET YOUR RANGE</span><span class="tiny-pi">π</span></div>
+        <div id="tiers"></div>
+        <button id="chaos" class="chaos-card" aria-pressed="false"><span class="chaos-symbol">✳</span><span><strong>Chaos</strong><small>1,000,000 digits. Pure luck.</small></span><span class="arrow">↗</span></button>
+        <div class="range-foot"><span class="small-orbit">◎</span><p>The number on the drum is your<br><strong>starting decimal position.</strong></p></div>
+      </aside>
+      <section class="game-panel" aria-label="Pi Tumbler game">
+        <div class="game-top"><span id="mode-tag" class="mode-tag">BEGINNER I</span><span class="eyebrow" id="range-label">DIGITS 1—20</span></div>
+        <div class="machine">
+          <p class="eyebrow" id="machine-caption">LET THE NUMBERS FALL INTO PLACE</p>
+          <div class="tumbler-shell"><span class="screw left-screw"></span><div class="tumbler" id="tumbler" role="img" aria-label="Tumbler ready"><div class="drum-shadow"></div><div class="reel-row" id="reels" aria-hidden="true"></div><div class="selection-line"></div></div><span class="screw right-screw"></span><span class="pointer left-pointer"></span><span class="pointer right-pointer"></span></div>
+          <div class="position-line"><span class="line"></span><span id="position-label">YOUR STARTING POSITION</span><span class="line"></span></div>
+        </div>
+        <div class="play-zone">
+          <div class="timer-label"><span id="task-label">Ready when you are.</span><span><strong id="timer">14.0</strong><span class="seconds">s</span></span></div>
+          <div class="timer-track" role="progressbar" aria-label="Time remaining" aria-valuemin="0" aria-valuemax="14" aria-valuenow="14"><div id="timer-bar"></div></div>
+          <form id="answer-form" autocomplete="off">
+            <label class="sr-only" for="answer">Enter four digits of pi</label>
+            <div class="answer-wrap"><input id="answer" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="····" disabled aria-describedby="feedback" spellcheck="false"><span class="input-pi">π →</span><span class="input-note">4 DIGITS</span></div>
+            <div class="round-tools"><span id="attempts">1 guess per round</span><button type="button" id="hint" class="hint-button" disabled>◉ &nbsp; Reveal hint <span>−3s</span></button></div>
+            <div id="hint-box" class="hint-box" hidden></div>
+            <p id="feedback" role="status" aria-live="polite">Spin the tumbler. Trust your memory.</p>
+            <button type="button" id="spin" class="primary" disabled><span id="spin-text">Loading pi…</span><span id="spin-icon">↻</span></button>
+            <button type="submit" id="check" class="primary" hidden>Check digits <span>↵</span></button>
+          </form>
+          <p class="keyboard-note" id="keyboard-note">14 seconds · 4 consecutive digits · a little nerve</p>
+        </div>
+      </section>
+    </div>
+    <div class="rules-strip"><div><span>01</span><p><strong>Spin a position</strong><small>A random start within your range.</small></p></div><div><span>02</span><p><strong>Recall four digits</strong><small>Start there. Keep going for four.</small></p></div><div><span>03</span><p><strong>Beat the clock</strong><small>A hint helps, but costs 3 seconds.</small></p></div></div>
+  </main>
+  <footer><span>3.14159265358979323846264338327950288419716939937510…</span><span>INFINITE DIGITS. FINITE TIME.</span></footer>
+  <dialog id="help-dialog"><form method="dialog"><button class="close-dialog" aria-label="Close instructions">×</button></form><p class="eyebrow">THE RULES OF THE IRRATIONAL</p><h2>Find your four.</h2><p>Choose a level and spin. The tumbler selects a decimal position in π. Position 1 is the first 1 in 3.14159.</p><p>If you land on <strong>10</strong>, enter digits <strong>10–13</strong>: <code>5897</code>. A position near the end of your range can extend beyond it.</p><p>You have <strong>14 seconds</strong> after the drum stops and one guess. Reveal a hint once to see surrounding digits, at a cost of <strong>3 seconds</strong>. If fewer than 3 seconds remain, the hint ends the round.</p><p><strong>Chaos:</strong> any position up to 1,000,000. Three guesses share one 14-second timer. No hints or partial matches. Just luck.</p><p class="muted">Type all four digits, then press Enter or Check digits. On mobile, use the number keyboard. Sound can be switched off at any time.</p></dialog>
+</body>
+</html>
