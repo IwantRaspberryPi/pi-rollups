@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { TIERS, Round, answerAt, hintAt, randomPosition } from '../game.js';
+import { TIERS, Round, answerAt, hintAt, randomPosition, scoreGuess } from '../game.js';
 const pi = readFileSync(new URL('../data/pi.txt', import.meta.url), 'utf8');
 test('pi dataset has exact length, known decimal prefix, and matching digest', () => {
   assert.match(pi, /^\d{1000010}$/);
@@ -42,15 +42,15 @@ test('hint deducts exactly 3 seconds once and can expire the round', () => {
   assert.equal(r.hint(1000),false); assert.equal(r.deadline,11000);
   const late=new Round(pi,1,false,0); late.hint(12000); assert.equal(late.status,'timeout');
 });
-test('Chaos has no hints, three guesses, and one shared deadline', () => {
+test('Chaos has no hints, three guesses, and no time limit', () => {
   const r=new Round(pi,1000000,true,0); assert.equal(r.hint(1),false); assert.equal(r.hinted,false);
   let wrong= r.answer==='0000'?'1111':'0000';
   assert.equal(r.submit(wrong,1000),'playing'); assert.equal(r.submit(wrong,2000),'playing');
-  assert.equal(r.deadline,14000); assert.equal(r.attempts,1); assert.equal(r.submit(r.answer,3000),'won');
+  assert.equal(r.deadline,Infinity); assert.equal(r.remaining(1e12),Infinity); assert.equal(r.attempts,1); assert.equal(r.submit(r.answer,3000),'won');
   const failed=new Round(pi,1,true,0); for(let i=0;i<3;i++) failed.submit('0000',i); assert.equal(failed.status,'lost');
 });
 test('expired rounds reject answers even when timer rendering was suspended', () => {
-  const r=new Round(pi,1,true,0); assert.equal(r.submit('1415',14000),'ignored'); assert.equal(r.status,'timeout');
+  const r=new Round(pi,1,false,0); assert.equal(r.submit('1415',14000),'ignored'); assert.equal(r.status,'timeout');
   const hidden=new Round(pi,1,false,0); assert.equal(hidden.remaining(60000),0); assert.equal(hidden.status,'timeout');
 });
 test('leading zeros are kept as four-character answers',()=>{
@@ -63,4 +63,20 @@ test('dataset checkpoints match independently published pi digits', () => {
   for (const [position, expected] of [[1000,'9380952572'], [500000,'2697391017'], [999990,'0577945815'], [1000000,'1309275628']]) {
     assert.equal(pi.slice(position-1,position+9),expected);
   }
+});
+
+test('Wordle feedback handles exact matches and duplicate digits', () => {
+  assert.deepEqual(scoreGuess('1123','1111'), ['correct','correct','absent','absent']);
+  assert.deepEqual(scoreGuess('0123','3000'), ['present','present','absent','absent']);
+  assert.deepEqual(scoreGuess('1123','2111'), ['present','correct','present','absent']);
+  assert.deepEqual(scoreGuess('1234','4321'), Array(4).fill('present'));
+  assert.deepEqual(scoreGuess('0000','0000'), Array(4).fill('correct'));
+});
+test('Chaos retains three rows and accepts guesses long after 14 seconds', () => {
+  const r = new Round(pi,1,true,0);
+  r.submit('1111',86400000); r.submit('5555',86400001);
+  assert.equal(r.submit('1415',86400002),'won'); assert.equal(r.guesses.length,3);
+  assert.deepEqual(r.guesses[0].marks,['correct','absent','correct','absent']);
+  assert.deepEqual(r.guesses[2].marks,Array(4).fill('correct'));
+  assert.equal(r.submit('1415',86400003),'ignored'); assert.equal(r.guesses.length,3);
 });
