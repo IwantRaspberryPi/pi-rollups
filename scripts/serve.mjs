@@ -11,4 +11,4 @@ http.createServer(async (req, res) => {
     res.setHeader('Content-Type', `${types[extname(target)] || 'application/octet-stream'}; charset=utf-8`);
     res.end(await readFile(target));
   } catch { res.writeHead(404).end('Not found'); }
-}).listen(4173, '127.0.0.1', () => console.log('Pi Tumbler: http://localhost:4173'));
+}).listen(4173, '127.0.0.1', () => console.log('Pi Rollups: http://localhost:4173'));
