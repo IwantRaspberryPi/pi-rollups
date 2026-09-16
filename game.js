@@ -28,6 +28,7 @@ export class Round {
     this.chaos = chaos;
     this.deadline = chaos ? Infinity : now + DURATION;
     this.guesses = [];
+    this.comparison = null;
     this.attempts = chaos ? 3 : 1;
     this.hinted = false;
     this.status = 'playing';
@@ -45,6 +46,12 @@ export class Round {
     this.deadline -= 3000;
     this.remaining(now);
     return true;
+  }
+  compare(value) {
+    if (!this.chaos || this.status !== 'playing' || this.comparison) return null;
+    const result = compareNumber(this.answer, value);
+    if (result) this.comparison = result;
+    return result;
   }
   submit(value, now) {
     this.remaining(now);
@@ -71,4 +78,12 @@ export function scoreGuess(answer, guess) {
     }
   }
   return marks;
+}
+
+// Compare the whole four-digit answer numerically, keeping leading zeros for display.
+export function compareNumber(answer, value) {
+  if (!/^\d{4}$/.test(answer) || !/^\d{1,4}$/.test(value)) return null;
+  const entered = value.padStart(4, '0');
+  const direction = Number(answer) > Number(entered) ? 'HIGH' : Number(answer) < Number(entered) ? 'LOW' : 'MATCH';
+  return { value: entered, direction };
 }
