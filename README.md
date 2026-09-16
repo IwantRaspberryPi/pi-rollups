@@ -1,10 +1,10 @@
-# Pi Tumbler
+# Pi Rollups
 
 An English-language pi memory arcade built with HTML, CSS, and JavaScript. No build step, backend, analytics, or runtime dependencies. Designed for GitHub Pages.
 
 ## Rules
 
-Spin the tumbler to choose a starting position **after the decimal point** (position 1 is the first `1` in `3.14159`). Enter four consecutive digits beginning there, even when they extend beyond the level's range. The 14-second countdown begins after the tumbler stops.
+Spin the tumbler to choose a starting position **after the decimal point** (position 1 is the first `1` in `3.14159`). Enter four consecutive digits beginning there, even when they extend beyond the level's range. In normal levels, the 14-second countdown begins after the tumbler stops.
 
 | Tier | I | II | III |
 | --- | ---: | ---: | ---: |
@@ -14,7 +14,7 @@ Spin the tumbler to choose a starting position **after the decimal point** (posi
 
 Normal rounds allow one answer and one optional context hint. A hint masks all four answer digits, costs 3 seconds, and can end the round if less than 3 seconds remain. Long hints abbreviate intervening digits.
 
-Chaos chooses a starting position from 1 through 1,000,000, inclusive. It has no hints and gives three guesses within one 14-second countdown. Incorrect guesses reveal no individual matching digits and never reset the timer.
+Chaos chooses a starting position from 1 through 1,000,000, inclusive. It has no time limit and gives three Wordle-style guesses. Each four-digit row stays visible: green/check means correct position, yellow/arrows means a digit elsewhere, and gray/cross means no remaining match. Exact matches consume occurrences first, so duplicate digits receive correct feedback. There is no reveal-hint button. End round lets you leave an unfinished puzzle.
 
 ## Develop
 
@@ -27,3 +27,11 @@ Push to GitHub. In **Settings → Pages**, choose **Deploy from a branch**, **ma
 ## Data
 
 `data/pi.txt` contains 1,000,010 decimal digits, including padding beyond the last selectable position. `scripts/generate_pi.py` calculates them with Chudnovsky binary splitting and integer arithmetic, using Python's standard library. `data/pi.sha256` records the file digest. The game uses this local dataset, without an external pi API.
+
+## Daily attendance
+
+Visits automatically count once per local calendar day. Consecutive days increase the streak; missing a day resets it to 1 on the next visit. Month, year, leap-day and daylight-saving boundaries use calendar days rather than elapsed 24-hour periods. A visible open page checks again each minute and when you return to it; a hidden tab does not check in by itself.
+
+Attendance is stored in this browser's localStorage, without an account or cross-device synchronization. Clearing browser data resets it; unavailable storage is reported in the interface. This is a personal streak, not a tamper-proof reward system.
+
+Live site: https://iwantraspberrypi.github.io/pi-rollups/

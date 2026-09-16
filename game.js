@@ -26,12 +26,14 @@ export class Round {
     this.answer = answerAt(pi, position);
     this.position = position;
     this.chaos = chaos;
-    this.deadline = now + DURATION;
+    this.deadline = chaos ? Infinity : now + DURATION;
+    this.guesses = [];
     this.attempts = chaos ? 3 : 1;
     this.hinted = false;
     this.status = 'playing';
   }
   remaining(now) {
+    if (this.chaos) return Infinity;
     const left = Math.max(0, this.deadline - now);
     if (left === 0 && this.status === 'playing') this.status = 'timeout';
     return left;
@@ -47,9 +49,26 @@ export class Round {
   submit(value, now) {
     this.remaining(now);
     if (this.status !== 'playing' || !/^\d{4}$/.test(value)) return 'ignored';
+    if (this.chaos) this.guesses.push({ value, marks: scoreGuess(this.answer, value) });
     this.attempts--;
     if (value === this.answer) this.status = 'won';
     else if (this.attempts === 0) this.status = 'lost';
     return this.status;
   }
+}
+
+export function scoreGuess(answer, guess) {
+  if (!/^\d{4}$/.test(answer) || !/^\d{4}$/.test(guess)) throw new TypeError('Expected four digits');
+  const marks = Array(4).fill('absent'), remaining = {};
+  // Reserve exact matches before distributing remaining digit occurrences.
+  for (let i = 0; i < 4; i++) {
+    if (answer[i] === guess[i]) marks[i] = 'correct';
+    else remaining[answer[i]] = (remaining[answer[i]] || 0) + 1;
+  }
+  for (let i = 0; i < 4; i++) {
+    if (marks[i] !== 'correct' && remaining[guess[i]] > 0) {
+      marks[i] = 'present'; remaining[guess[i]]--;
+    }
+  }
+  return marks;
 }

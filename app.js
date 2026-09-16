@@ -1,3 +1,4 @@
+import { checkIn } from './attendance.js';
 import { TIERS, Round, randomPosition, hintAt, DURATION } from './game.js';
 const $ = id => document.getElementById(id);
 let pi = '', tier = 0, level = 0, chaos = false, phase = 'loading', round = null;
@@ -33,14 +34,18 @@ function selection() {
   document.querySelectorAll('.level-button').forEach(b => b.setAttribute('aria-pressed', String(!chaos && Number(b.dataset.tier) === tier && Number(b.dataset.level) === level)));
   $('chaos').setAttribute('aria-pressed', String(chaos));
   $('hint').hidden = chaos;
+  $('timer-value').hidden = chaos;
+  document.querySelector('.timer-track').hidden = chaos;
+  $('chaos-puzzle').hidden = !chaos;
+  $('end-round').hidden = !(chaos && phase === 'playing');
+  renderBoard();
   $('attempts').textContent = chaos ? '● ● ●   3 guesses · no hints' : '1 guess per round';
-  $('keyboard-note').textContent = chaos ? '1,000,000 positions · 3 guesses · pure luck' : '14 seconds · 4 consecutive digits · a little nerve';
+  $('keyboard-note').textContent = chaos ? '1,000,000 positions · 3 guesses · no time limit' : '14 seconds · 4 consecutive digits · a little nerve';
 }
 function reset() {
   cancelAnimationFrame(animation); clearInterval(spinFrame); clearTimeout(spinEnd);
   round = null; phase = pi ? 'ready' : 'loading';
   $('tumbler').classList.remove('spinning'); $('tumbler').setAttribute('aria-label', 'Tumbler ready');
-  $('game-panel')?.classList.remove('result-won', 'result-lost', 'result-timeout');
   document.querySelector('.game-panel').classList.remove('result-won', 'result-lost', 'result-timeout');
   $('answer').value = ''; $('answer').disabled = true; $('hint').disabled = true;
   $('hint-box').hidden = true; $('hint-box').replaceChildren();
@@ -49,7 +54,7 @@ function reset() {
   $('machine-caption').textContent = 'LET THE NUMBERS FALL INTO PLACE';
   $('position-label').textContent = 'YOUR STARTING POSITION';
   $('task-label').textContent = 'Ready when you are.';
-  $('feedback').textContent = chaos ? 'Three guesses. No hints. Good luck.' : 'Spin the tumbler. Trust your memory.';
+  $('feedback').textContent = chaos ? 'Three guesses. Use the colors to find your four.' : 'Spin the tumbler. Trust your memory.';
   renderReels(); updateTimer(DURATION); selection(); lockSelection(!pi);
 }
 function lockSelection(locked) {
@@ -80,14 +85,15 @@ function updateTimer(ms) {
   document.querySelector('.timer-track').setAttribute('aria-valuenow', String(Math.round(ms / 100) / 10));
 }
 function tick() {
-  if (phase !== 'playing') return;
+  if (phase !== 'playing' || chaos) return;
   updateTimer(round.remaining(clock()));
   if (round.status !== 'playing') { finish(); return; }
   animation = requestAnimationFrame(tick);
 }
 function finish() {
   if (phase !== 'playing') return;
-  phase = 'result'; cancelAnimationFrame(animation); updateTimer(round.remaining(clock())); lockSelection(false);
+  phase = 'result'; cancelAnimationFrame(animation); if (!chaos) updateTimer(round.remaining(clock())); lockSelection(false);
+  $('end-round').hidden = true; renderBoard();
   $('answer').disabled = true; $('hint').disabled = true; $('check').hidden = true; $('spin').hidden = false; $('spin').disabled = false;
   $('spin-text').textContent = 'Spin again';
   const won = round.status === 'won';
@@ -101,7 +107,7 @@ function spin() {
   if (!pi || phase === 'playing' || phase === 'spinning') return;
   unlockAudio(); reset(); phase = 'spinning'; lockSelection(true);
   $('spin').disabled = true; $('spin-text').textContent = 'Finding your position…';
-  $('feedback').textContent = 'The clock starts when the tumbler stops.';
+  $('feedback').textContent = chaos ? 'Three rows. Four digits. Take your time.' : 'The clock starts when the tumbler stops.';
   $('machine-caption').textContent = 'A SMALL SPIN INTO INFINITY';
   const max = chaos ? 1000000 : TIERS[tier].limits[level];
   const position = randomPosition(max);
@@ -115,23 +121,25 @@ function spin() {
     $('machine-caption').textContent = 'YOUR NUMBER IS IN. MAKE IT COUNT.';
     $('position-label').textContent = `POSITION ${position.toLocaleString('en-US')}`;
     $('task-label').textContent = `Enter digits ${position.toLocaleString('en-US')}–${(position + 3).toLocaleString('en-US')}`;
-    $('feedback').textContent = chaos ? 'Three guesses. One clock. Trust your luck.' : 'Four digits, starting at the selected position.';
+    $('feedback').textContent = chaos ? 'Three guesses. No clock. Each row gives you clues.' : 'Four digits, starting at the selected position.';
     $('spin').hidden = true; $('check').hidden = false; $('check').disabled = true;
     $('answer').disabled = false; $('hint').disabled = chaos;
     round = new Round(pi, position, chaos, clock()); phase = 'playing';
-    $('answer').focus({preventScroll:true}); tick();
+    $('end-round').hidden = !chaos; renderBoard();
+    $('answer').focus({preventScroll:true}); if (!chaos) tick();
   }, reduced ? 180 : 1800);
 }
 $('spin').addEventListener('click', () => { if (phase === 'error') loadPi(); else spin(); });
-$('answer').addEventListener('input', () => { $('answer').value = $('answer').value.replace(/[^0-9]/g, '').slice(0,4); $('check').disabled = $('answer').value.length !== 4; });
+$('answer').addEventListener('input', () => { $('answer').value = $('answer').value.replace(/[^0-9]/g, '').slice(0,4); $('check').disabled = $('answer').value.length !== 4; renderBoard(); });
 $('answer-form').addEventListener('submit', event => {
   event.preventDefault(); if (phase !== 'playing') return;
   const result = round.submit($('answer').value, clock());
+  if (result !== 'ignored') renderBoard();
   if (round.status !== 'playing') { finish(); return; }
   if (result === 'ignored') return;
   $('attempts').textContent = `${'● '.repeat(round.attempts)}${'○ '.repeat(3 - round.attempts)} ${round.attempts} ${round.attempts === 1 ? 'guess' : 'guesses'} left`;
-  $('feedback').textContent = `Not quite. ${round.attempts} ${round.attempts === 1 ? 'guess' : 'guesses'} left — the clock is still running.`;
-  $('answer').value = ''; $('check').disabled = true; $('answer').focus(); tone(190,.1,'triangle');
+  $('feedback').textContent = `Not quite. ${round.attempts} ${round.attempts === 1 ? 'guess' : 'guesses'} left — use the colors to narrow it down.`;
+  $('answer').value = ''; $('check').disabled = true; renderBoard(); $('answer').focus(); tone(190,.1,'triangle');
 });
 $('hint').addEventListener('click', () => {
   if (phase !== 'playing') return;
@@ -164,4 +172,44 @@ async function loadPi() {
     $('spin-text').textContent = 'Retry loading'; $('spin').disabled = false;
   }
 }
-reset(); loadPi();
+const attendanceKey = 'pi-rollups.attendance.v1';
+let attendanceMemory = null;
+function refreshAttendance() {
+  if (document.visibilityState !== 'visible') return;
+  let previous = attendanceMemory, saved = true;
+  try { previous = JSON.parse(localStorage.getItem(attendanceKey)) || previous; } catch { /* Recover invalid or unavailable storage. */ }
+  attendanceMemory = checkIn(previous);
+  try { localStorage.setItem(attendanceKey, JSON.stringify(attendanceMemory)); } catch { saved = false; }
+  $('streak-count').textContent = attendanceMemory.streak;
+  $('streak-unit').textContent = attendanceMemory.streak === 1 ? 'day streak' : 'days in a row';
+  $('streak-status').textContent = saved ? 'Checked in today' : 'This visit counts, but storage is unavailable.';
+  document.querySelector('.checkin-badge').textContent = saved ? '✓' : '!';
+}
+function renderBoard() {
+  if (!chaos) return;
+  const symbols = {correct:'✓',present:'↔',absent:'×'};
+  const labels = {correct:'right place',present:'wrong place',absent:'not matched'};
+  const history = round?.guesses || [];
+  $('guess-board').replaceChildren(...Array.from({length:3},(_,rowIndex)=>{
+    const row=document.createElement('div'); row.className='guess-row'; row.setAttribute('role','group'); row.setAttribute('aria-label',`Guess ${rowIndex+1}`);
+    const guess=history[rowIndex];
+    const draft=phase==='playing' && rowIndex===history.length ? $('answer').value : '';
+    for(let i=0;i<4;i++) {
+      const mark=guess?.marks[i], digit=guess ? guess.value[i] : (draft[i] || '');
+      const tile=document.createElement('span'); tile.className=`guess-tile ${mark || (draft ? 'draft' : '')}`;
+      tile.setAttribute('aria-label',`Digit ${i+1}: ${digit || 'empty'}${mark ? ', '+labels[mark] : ''}`);
+      const value=document.createElement('b'); value.textContent=digit || '·'; value.setAttribute('aria-hidden','true'); tile.append(value);
+      if(mark) {const icon=document.createElement('small'); icon.textContent=symbols[mark]; icon.setAttribute('aria-hidden','true'); tile.append(icon);}
+      row.append(tile);
+    }
+    return row;
+  }));
+}
+$('end-round').addEventListener('click',()=>{
+  if (chaos && phase==='playing') { round.status='lost'; finish(); }
+});
+document.addEventListener('visibilitychange',refreshAttendance);
+window.addEventListener('focus',refreshAttendance);
+window.addEventListener('storage',event=>{if(event.key===attendanceKey) refreshAttendance();});
+setInterval(refreshAttendance,60000);
+refreshAttendance(); reset(); loadPi();
