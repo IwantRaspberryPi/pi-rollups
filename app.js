@@ -102,8 +102,8 @@ function finish() {
   $('spin-text').textContent = 'Spin again';
   const won = round.status === 'won';
   document.querySelector('.game-panel').classList.add(`result-${round.status}`);
-  $('task-label').textContent = won ? 'Perfect recall.' : round.status === 'timeout' ? 'Time’s up.' : 'A little more practice.';
-  $('feedback').textContent = won ? `Exactly right. ${round.answer} — nicely remembered.` : `${round.status === 'timeout' ? 'Time’s up.' : 'Not this time.'} Digits ${round.position.toLocaleString('en-US')}–${(round.position + 3).toLocaleString('en-US')} are ${round.answer}.`;
+  $('task-label').textContent = won ? (chaos ? 'Chaos conquered.' : 'Perfect recall.') : round.status === 'timeout' ? 'Time’s up.' : 'A little more practice.';
+  $('feedback').textContent = won ? (chaos ? `Exactly right. ${round.answer} — you beat the odds.` : `Exactly right. ${round.answer} — nicely remembered.`) : `${round.status === 'timeout' ? 'Time’s up.' : 'Not this time.'} Digits ${round.position.toLocaleString('en-US')}–${(round.position + 3).toLocaleString('en-US')} are ${round.answer}.`;
   if (won) { tone(523,.15); tone(659,.15,'sine',.035,.12); tone(784,.3,'sine',.035,.24); } else tone(150,.22,'triangle');
   $('spin').focus({preventScroll:true});
 }
