@@ -14,7 +14,7 @@ Spin the tumbler to choose a starting position **after the decimal point** (posi
 
 Normal rounds allow one answer and one optional context hint. A hint masks all four answer digits, costs 3 seconds, and can end the round if less than 3 seconds remain. Long hints abbreviate intervening digits.
 
-Chaos chooses a starting position from 1 through 1,000,000, inclusive. It has no time limit and gives three Wordle-style guesses. Each four-digit row stays visible: green/check means correct position, yellow/arrows means a digit elsewhere, and gray/cross means no remaining match. Exact matches consume occurrences first, so duplicate digits receive correct feedback. There is no reveal-hint button. End round lets you leave an unfinished puzzle.
+Chaos chooses a starting position from 1 through 1,000,000, inclusive. It has no time limit and gives three Wordle-style guesses. Each four-digit row stays visible: green/check means correct position, yellow/arrows means a digit elsewhere, and gray/cross means no remaining match. Exact matches consume occurrences first, so duplicate digits receive correct feedback. Each Chaos round also offers one HIGH/LOW comparison hint, independent of the three guesses. Enter an integer from 0 to 9999 (short inputs are padded with leading zeros). HIGH means the whole four-digit answer is greater than the input; LOW means it is smaller; MATCH means equal. A match still requires submitting the answer normally. Invalid inputs do not consume the hint, and starting a new round restores its one use. End round lets you leave an unfinished puzzle.
 
 ## Develop
 

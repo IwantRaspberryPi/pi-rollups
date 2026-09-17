@@ -37,14 +37,18 @@ function selection() {
   $('timer-value').hidden = chaos;
   document.querySelector('.timer-track').hidden = chaos;
   $('chaos-puzzle').hidden = !chaos;
+  syncComparison();
   $('end-round').hidden = !(chaos && phase === 'playing');
   renderBoard();
-  $('attempts').textContent = chaos ? '● ● ●   3 guesses · no hints' : '1 guess per round';
+  $('attempts').textContent = chaos ? '● ● ●   3 guesses · 1 HIGH/LOW hint' : '1 guess per round';
   $('keyboard-note').textContent = chaos ? '1,000,000 positions · 3 guesses · no time limit' : '14 seconds · 4 consecutive digits · a little nerve';
 }
 function reset() {
   cancelAnimationFrame(animation); clearInterval(spinFrame); clearTimeout(spinEnd);
   round = null; phase = pi ? 'ready' : 'loading';
+  $('compare-number').value = '';
+  $('compare-result').textContent = 'Spin to unlock your hint.';
+  $('compare-result').removeAttribute('data-direction');
   $('tumbler').classList.remove('spinning'); $('tumbler').setAttribute('aria-label', 'Tumbler ready');
   document.querySelector('.game-panel').classList.remove('result-won', 'result-lost', 'result-timeout');
   $('answer').value = ''; $('answer').disabled = true; $('hint').disabled = true;
@@ -93,7 +97,7 @@ function tick() {
 function finish() {
   if (phase !== 'playing') return;
   phase = 'result'; cancelAnimationFrame(animation); if (!chaos) updateTimer(round.remaining(clock())); lockSelection(false);
-  $('end-round').hidden = true; renderBoard();
+  $('end-round').hidden = true; renderBoard(); syncComparison();
   $('answer').disabled = true; $('hint').disabled = true; $('check').hidden = true; $('spin').hidden = false; $('spin').disabled = false;
   $('spin-text').textContent = 'Spin again';
   const won = round.status === 'won';
@@ -125,7 +129,7 @@ function spin() {
     $('spin').hidden = true; $('check').hidden = false; $('check').disabled = true;
     $('answer').disabled = false; $('hint').disabled = chaos;
     round = new Round(pi, position, chaos, clock()); phase = 'playing';
-    $('end-round').hidden = !chaos; renderBoard();
+    $('end-round').hidden = !chaos; renderBoard(); syncComparison();
     $('answer').focus({preventScroll:true}); if (!chaos) tick();
   }, reduced ? 180 : 1800);
 }
@@ -150,6 +154,28 @@ $('hint').addEventListener('click', () => {
     $('feedback').textContent = 'Hint revealed. 3 seconds deducted.'; updateTimer(round.remaining(clock()));
   }
   if (round.status !== 'playing') finish(); else $('answer').focus({preventScroll:true});
+});
+function syncComparison() {
+  $('compare-form').hidden = !chaos;
+  const used = Boolean(round?.comparison);
+  const available = chaos && phase === 'playing' && !used;
+  $('compare-number').disabled = !available;
+  $('compare-button').disabled = !available || !/^\d{1,4}$/.test($('compare-number').value);
+  $('compare-uses').textContent = used ? 'Hint used' : '1 use per round';
+  if (!used) $('compare-result').textContent = phase === 'playing' ? 'One comparison. Choose your number.' : phase === 'result' ? 'Round finished.' : 'Spin to unlock your hint.';
+}
+$('compare-number').addEventListener('input', syncComparison);
+$('compare-form').addEventListener('submit', event => {
+  event.preventDefault();
+  if (!chaos || phase !== 'playing') return;
+  const result = round.compare($('compare-number').value);
+  if (!result) return;
+  $('compare-number').value = result.value;
+  const meaning = result.direction === 'HIGH' ? `The answer is greater than ${result.value}.` : result.direction === 'LOW' ? `The answer is less than ${result.value}.` : `The answer equals ${result.value}. Submit it with Check digits.`;
+  $('compare-result').textContent = `${result.direction} — ${meaning}`;
+  $('compare-result').dataset.direction = result.direction;
+  syncComparison();
+  $('answer').focus({preventScroll:true});
 });
 $('sound').addEventListener('click', () => {
   soundEnabled = !soundEnabled; if (soundEnabled) unlockAudio();
