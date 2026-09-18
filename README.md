@@ -35,3 +35,9 @@ Visits automatically count once per local calendar day. Consecutive days increas
 Attendance is stored in this browser's localStorage, without an account or cross-device synchronization. Clearing browser data resets it; unavailable storage is reported in the interface. This is a personal streak, not a tamper-proof reward system.
 
 Live site: https://iwantraspberrypi.github.io/pi-rollups/
+
+## Medals and Chaos honors
+
+Successful rounds are counted separately for all nine normal levels. Each level displays its highest medal: Bronze at 1 win, Silver at 5, Gold at 10, and Platinum at 30. Hints do not disqualify a win. Counts continue above 30. Chaos victories have a separate collectible decoration with an unlimited cumulative count. Losing, timing out, ending a round, or merely matching the comparison hint awards nothing.
+
+Progress uses the versioned localStorage key `pi-rollups.progress.v1`. It survives reloads and missed attendance days, but clearing browser data resets it; there is no account or cross-device sync. Historical wins before this feature cannot be recovered. If storage is blocked or full, the interface explains that rewards last only for the current visit. Other tabs refresh their display on storage changes and focus. This is a personal collection, not a verified leaderboard.

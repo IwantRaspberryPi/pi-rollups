@@ -50,6 +50,7 @@
             <div class="round-tools"><span id="attempts">1 guess per round</span><button type="button" id="hint" class="hint-button" disabled>◉ &nbsp; Reveal hint <span>−3s</span></button></div>
             <div id="hint-box" class="hint-box" hidden></div>
             <p id="feedback" role="status" aria-live="polite">Spin the tumbler. Trust your memory.</p>
+            <p id="reward-notice" class="reward-notice" role="status" aria-live="polite" hidden></p>
             <button type="button" id="spin" class="primary" disabled><span id="spin-text">Loading pi…</span><span id="spin-icon">↻</span></button>
             <button type="submit" id="check" class="primary" hidden>Check digits <span>↵</span></button>
             <button type="button" id="end-round" class="end-round" hidden>End round</button>
@@ -64,7 +65,18 @@
         </div>
       </section>
     </div>
+    <section class="collection" aria-labelledby="collection-title">
+      <div class="collection-heading"><div><p class="eyebrow">02 / YOUR COLLECTION</p><h2 id="collection-title">Every win leaves a mark.</h2></div><span class="collection-tag">EARNED, ONE ROUND AT A TIME</span></div>
+      <div id="medal-legend" class="medal-legend" aria-label="Medal milestones per level"></div>
+      <div id="medal-levels" class="medal-levels"></div>
+      <section id="chaos-honor" class="chaos-honor unearned" aria-labelledby="chaos-honor-title">
+        <img src="./assets/medals/chaos.webp" alt="" width="112" height="112" loading="lazy">
+        <div class="chaos-honor-copy"><p class="eyebrow">THE ORDER OF CHAOS</p><h3 id="chaos-honor-title">Against all odds.</h3><p id="chaos-honor-note">Beat Chaos to earn your first mark of honor.</p></div>
+        <div class="chaos-honor-total"><strong id="chaos-honor-count">0</strong><span id="chaos-honor-unit">victories</span></div>
+      </section>
+      <p id="progress-note" class="progress-note"></p>
+    </section>
   </main>
-  <dialog id="help-dialog"><form method="dialog"><button class="close-dialog" aria-label="Close instructions">×</button></form><p class="eyebrow">THE RULES OF THE IRRATIONAL</p><h2>Find your four.</h2><p>Choose a level and spin. The tumbler selects a decimal position in π. Position 1 is the first 1 in 3.14159.</p><p>If you land on <strong>10</strong>, enter digits <strong>10–13</strong>: <code>5897</code>. A position near the end of your range can extend beyond it.</p><p>In normal levels, you have <strong>14 seconds</strong> after the drum stops and one guess. Reveal a hint once to see surrounding digits, at a cost of <strong>3 seconds</strong>. If fewer than 3 seconds remain, the hint ends the round.</p><p><strong>Chaos:</strong> any position up to 1,000,000. Three guesses, no time limit. Each guess stays on the board: green ✓ means the digit is in the right place, yellow ↔ means it belongs elsewhere, and gray × means no remaining match. Repeated digits are counted only as often as they appear in the answer. You can also use one HIGH/LOW hint per round without spending a guess: enter a number from 0 to 9999. HIGH means the answer is greater than your number; LOW means it is smaller. MATCH means it is equal, but you must still submit the answer with Check digits.</p><p class="muted">Type all four digits, then press Enter or Check digits. On mobile, use the number keyboard. Sound can be switched off at any time.</p></dialog>
+  <dialog id="help-dialog"><form method="dialog"><button class="close-dialog" aria-label="Close instructions">×</button></form><p class="eyebrow">THE RULES OF THE IRRATIONAL</p><h2>Find your four.</h2><p>Choose a level and spin. The tumbler selects a decimal position in π. Position 1 is the first 1 in 3.14159.</p><p>If you land on <strong>10</strong>, enter digits <strong>10–13</strong>: <code>5897</code>. A position near the end of your range can extend beyond it.</p><p>In normal levels, you have <strong>14 seconds</strong> after the drum stops and one guess. Reveal a hint once to see surrounding digits, at a cost of <strong>3 seconds</strong>. If fewer than 3 seconds remain, the hint ends the round.</p><p><strong>Chaos:</strong> any position up to 1,000,000. Three guesses, no time limit. Each guess stays on the board: green ✓ means the digit is in the right place, yellow ↔ means it belongs elsewhere, and gray × means no remaining match. Repeated digits are counted only as often as they appear in the answer. You can also use one HIGH/LOW hint per round without spending a guess: enter a number from 0 to 9999. HIGH means the answer is greater than your number; LOW means it is smaller. MATCH means it is equal, but you must still submit the answer with Check digits.</p><p><strong>Your collection:</strong> win each normal level 1, 5, 10, or 30 times for Bronze, Silver, Gold, or Platinum. Each level has its own count; your highest medal is displayed. Every Chaos victory adds a mark of honor. Hints are allowed. Medals never expire, and are saved only in this browser.</p><p class="muted">Type all four digits, then press Enter or Check digits. On mobile, use the number keyboard. Sound can be switched off at any time.</p></dialog>
 </body>
 </html>

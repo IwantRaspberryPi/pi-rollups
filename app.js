@@ -1,3 +1,4 @@
+import { PROGRESS_KEY, LEVEL_KEYS, MEDALS, medalFor, nextMedal, createProgressStore } from './progress.js';
 import { checkIn } from './attendance.js';
 import { TIERS, Round, randomPosition, hintAt, DURATION } from './game.js';
 const $ = id => document.getElementById(id);
@@ -46,6 +47,7 @@ function selection() {
 function reset() {
   cancelAnimationFrame(animation); clearInterval(spinFrame); clearTimeout(spinEnd);
   round = null; phase = pi ? 'ready' : 'loading';
+  $('reward-notice').hidden = true;
   $('compare-number').value = '';
   $('compare-result').textContent = 'Spin to unlock your hint.';
   $('compare-result').removeAttribute('data-direction');
@@ -104,6 +106,7 @@ function finish() {
   document.querySelector('.game-panel').classList.add(`result-${round.status}`);
   $('task-label').textContent = won ? (chaos ? 'Chaos conquered.' : 'Perfect recall.') : round.status === 'timeout' ? 'Time’s up.' : 'A little more practice.';
   $('feedback').textContent = won ? (chaos ? `Exactly right. ${round.answer} — you beat the odds.` : `Exactly right. ${round.answer} — nicely remembered.`) : `${round.status === 'timeout' ? 'Time’s up.' : 'Not this time.'} Digits ${round.position.toLocaleString('en-US')}–${(round.position + 3).toLocaleString('en-US')} are ${round.answer}.`;
+  if (won) awardVictory();
   if (won) { tone(523,.15); tone(659,.15,'sine',.035,.12); tone(784,.3,'sine',.035,.24); } else tone(150,.22,'triangle');
   $('spin').focus({preventScroll:true});
 }
@@ -238,4 +241,72 @@ document.addEventListener('visibilitychange',refreshAttendance);
 window.addEventListener('focus',refreshAttendance);
 window.addEventListener('storage',event=>{if(event.key===attendanceKey) refreshAttendance();});
 setInterval(refreshAttendance,60000);
+
+const progressStore = createProgressStore({
+  getItem: key => localStorage.getItem(key),
+  setItem: (key, value) => localStorage.setItem(key, value),
+});
+function medalImage(id, alt = '') {
+  const image = document.createElement('img');
+  image.src = new URL('./assets/medals/' + id + '.webp', import.meta.url).href;
+  image.alt = alt; image.width = 96; image.height = 96; image.loading = 'lazy';
+  return image;
+}
+function renderCollection(progress = progressStore.read()) {
+  const groups = TIERS.map((item, ti) => {
+    const group = document.createElement('section'); group.className = 'medal-tier';
+    const heading = document.createElement('h3'); heading.textContent = item.name;
+    const row = document.createElement('div'); row.className = 'medal-row';
+    item.limits.forEach((limit, li) => {
+      const wins = progress.counts[LEVEL_KEYS[ti * 3 + li]];
+      const medal = medalFor(wins), next = nextMedal(wins);
+      const card = document.createElement('div'); card.className = 'medal-card' + (medal ? ' earned' : ' locked');
+      card.dataset.level = LEVEL_KEYS[ti * 3 + li];
+      const title = document.createElement('h4'); title.textContent = roman[li];
+      const range = document.createElement('span'); range.className = 'medal-range'; range.textContent = limit.toLocaleString('en-US') + ' digits';
+      const name = document.createElement('strong'); name.className = 'medal-name'; name.textContent = medal?.name || 'Unclaimed';
+      const count = document.createElement('span'); count.className = 'medal-count'; count.textContent = wins.toLocaleString('en-US') + (wins === 1 ? ' win' : ' wins');
+      const bar = document.createElement('progress'); bar.max = next?.wins || 30; bar.value = Math.min(wins, bar.max);
+      bar.setAttribute('aria-label', item.name + ' ' + roman[li] + (next ? ': progress to ' + next.name : ': Platinum earned'));
+      const note = document.createElement('small'); note.textContent = next ? (next.wins - wins) + ' to ' + next.name : 'Highest medal earned';
+      card.append(title, range, medalImage(medal?.id || 'bronze'), name, count, bar, note); row.append(card);
+    });
+    group.append(heading, row); return group;
+  });
+  $('medal-levels').replaceChildren(...groups);
+  const chaosWins = progress.counts.chaos;
+  $('chaos-honor-count').textContent = chaosWins.toLocaleString('en-US');
+  $('chaos-honor-unit').textContent = chaosWins === 1 ? 'victory' : 'victories';
+  $('chaos-honor').classList.toggle('unearned', chaosWins === 0);
+  $('chaos-honor-note').textContent = chaosWins ? 'One victory. One more mark of honor. Keep defying the odds.' : 'Beat Chaos to earn your first mark of honor.';
+  $('progress-note').textContent = progressStore.saved
+    ? 'Saved in this browser. Medals never expire when you miss a day. Clearing browser data resets them. Wins count from this update onward.'
+    : 'Browser storage is unavailable. Wins and medals will last only for this visit.';
+}
+function awardVictory() {
+  const key = chaos ? 'chaos' : LEVEL_KEYS[tier * 3 + level];
+  const before = progressStore.read().counts[key];
+  const progress = progressStore.recordWin(key), wins = progress.counts[key];
+  const medal = medalFor(wins), promoted = !chaos && medal?.id !== medalFor(before)?.id;
+  const notice = $('reward-notice');
+  const message = document.createElement('span');
+  message.textContent = chaos ? 'Chaos honor #' + wins.toLocaleString('en-US') + ' earned.'
+    : promoted ? medal.name + ' medal unlocked · ' + TIERS[tier].name + ' ' + roman[level]
+    : TIERS[tier].name + ' ' + roman[level] + ' · ' + wins.toLocaleString('en-US') + ' wins';
+  if (!progressStore.saved) message.textContent += ' Saved for this visit only.';
+  notice.replaceChildren(medalImage(chaos ? 'chaos' : medal.id), message);
+  notice.hidden = false;
+  renderCollection(progress);
+}
+$('medal-legend').replaceChildren(...MEDALS.map(medal => {
+  const item = document.createElement('div');
+  const caption = document.createElement('span'); caption.textContent = medal.name + ' · ' + medal.wins + (medal.wins === 1 ? ' win' : ' wins');
+  item.append(medalImage(medal.id), caption); return item;
+}));
+window.addEventListener('storage', event => {
+  if (event.key === PROGRESS_KEY || event.key === null) renderCollection();
+});
+window.addEventListener('focus', () => renderCollection());
+renderCollection();
+
 refreshAttendance(); reset(); loadPi();
